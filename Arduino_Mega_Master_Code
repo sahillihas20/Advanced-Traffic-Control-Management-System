@@ -1,0 +1,956 @@
+// Final MEGA Wire Master Reader
+
+//===========================================================================================================================================================================================
+
+#include <Wire.h>                // Connect multiple devices
+
+//===========================================================================================================================================================================================
+
+int Sensor[]={0,0,0,0,0};        // Table to store sensor values
+
+int s1;                          // Initialisation of sensor variables
+int s2;
+int s3;
+int s4;
+
+int R1 = 2;                      // led Pin declaration
+int Y1 = 3;
+int G1 = 4;
+int R2 = 5;
+int Y2 = 6;
+int G2 = 7;
+int R3 = 8;
+int Y3 = 9;
+int G3 = 10;
+int R4 = 11;
+int Y4 = 12;
+int G4 = 13;
+ 
+static int sen1;                 // Lane comparision, to sensor values
+static int sen2;
+static int sen3;
+static int sen4;
+
+int next_counter1 = 0;           // Refresh Sensor Value
+int next_counter2 = 0;
+int next_counter3 = 0;
+int next_counter4 = 0;
+
+int buffer1 = 0;                 // Store Extra Time After Lane Allocation
+int buffer2 = 0;
+int buffer3 = 0;
+int buffer4 = 0;
+
+int previous_counter1 = 0;       // These are for getting new values everytime for the counters/number of vehicles
+int previous_counter2 = 0;
+int previous_counter3 = 0;
+int previous_counter4 = 0;
+  
+volatile int vehicle_time1  =0;  // Allotted vehicle time for each lane
+volatile int vehicle_time2  =0;
+volatile int vehicle_time3  =0;
+volatile int vehicle_time4  =0;
+
+const int numReadings1 = 10;     // Store Sensor 10 values in array and calculate average             
+const int numReadings2 = 10;
+const int numReadings3 = 10;
+const int numReadings4 = 10;
+
+int previous_value1 = 510;       // Compare Sensor values
+int previous_value2 = 510;
+int previous_value3 = 510;
+int previous_value4 = 510;
+
+int counter1 = 0;                // Actual values of counter to be returned in other functions
+int counter2 = 0;
+int counter3 = 0;
+int counter4 = 0;
+
+int readings1[numReadings1];     // Index to store sensor values
+int readings2[numReadings2];
+int readings3[numReadings3];
+int readings4[numReadings4];
+
+int readIndex1 = 0;              // Index of arrays for calculating the average of sensor values
+int readIndex2 = 0;
+int readIndex3 = 0;
+int readIndex4 = 0;
+
+
+int total1 = 0;                  // Total of 10 sensor values
+int total2 = 0;
+int total3 = 0;
+int total4 = 0;
+
+
+int average1 = 0;               // The average
+int average2 = 0;
+int average3 = 0;
+int average4 = 0;
+
+int flag1 = 0;                  // To reset loop conditions
+int flag2 = 0;
+int flag3 = 0;
+int flag4 = 0;
+
+int c1 = 0;                     // Store counter value in alloTime
+int c2 = 0;
+int c3 = 0;
+int c4 = 0;
+
+int S1 = 0;                     // Initializes Sensor values
+int S2 = 0;
+int S3 = 0;
+int S4 = 0;
+
+//===========================================================================================================================================================================================
+
+void setup()                    // Initializes and starts arduino
+{
+  Wire.begin();                 // Join i2c bus (address optional for master)
+  Serial.begin(9600);           // Start serial for output
+  
+  for(int x=2;x<=53;x++)        // Pin initialization for LEDs and 7 segment displays
+ { 
+  pinMode(x,OUTPUT);
+ }
+
+ 
+  for (int thisReading1 = 0; thisReading1 < numReadings1; thisReading1++) 
+  {
+    readings1[thisReading1] = 0;
+  }
+
+   for (int thisReading2 = 0; thisReading2 < numReadings2; thisReading2++) 
+  {
+    readings2[thisReading2] = 0;
+  }
+
+   for (int thisReading3 = 0; thisReading3 < numReadings3; thisReading3++) 
+  {
+    readings3[thisReading3] = 0;
+  }
+
+   for (int thisReading4 = 0; thisReading4 < numReadings4; thisReading4++) 
+  {
+    readings4[thisReading4] = 0;
+  }
+}
+
+//===========================================================================================================================================================================================
+
+void loop()
+{
+  Wire.requestFrom(2, 5);       // Request 3 bytes from slave device #2
+
+    for(int i=0;i<5;i++)
+    { 
+    int c = Wire.read();       // Receive a byte as character
+
+    Serial.print(c); 
+    Sensor[i]=c;
+    Serial.print('\t');    
+    
+    }
+     Serial.print('\n');
+     Serial.print("Sensor[0] value = ");
+     Serial.print(Sensor[0]);
+     Serial.print('\t'); 
+     Serial.print("Sensor[1] value = ");
+     Serial.print(Sensor[1]);
+     Serial.print('\t'); 
+     Serial.print("Sensor[2] value = ");
+     Serial.print(Sensor[2]);
+     Serial.print('\n');
+     Serial.print("Sensor[3] value = ");
+     Serial.print(Sensor[3]);
+     Serial.print('\n');
+     Serial.print("Sensor[4] value = ");
+     Serial.print(Sensor[4]);
+     Serial.print('\n');
+   
+   Serial.println("IIIIIIIIII Have Satartedddd");
+   int s1; int s2; int s3; int s4;
+  
+   s1 = Sensor[0];
+   Serial.println(s1);                              
+   s2 = Sensor[1]; 
+   Serial.println(s2);                               
+   s3 = Sensor[2];
+   Serial.println(s3);                                      
+   s4 =  Sensor[3];
+   Serial.println(s4);     
+
+
+   next_counter1=s1;
+   s1=s1-previous_counter1;
+   previous_counter1=next_counter1;
+
+  
+   next_counter2=s2;
+   s2=s2-previous_counter2;
+   previous_counter2=next_counter2;
+  
+   next_counter3=s3;
+   s3=s3-previous_counter3;
+   previous_counter3=next_counter3;
+ 
+   next_counter4=s4;
+   s4=s4-previous_counter4;
+   previous_counter4=next_counter4;
+ 
+   sen1=s1;
+   sen2=s2;
+   sen3=s3;
+   sen4=s4;
+ 
+//Reset counter values for every sensor
+
+//===========================================================================================================================================================================================
+  if(flag1 == 0)
+  {
+    
+    Serial.println("40 40 40 40 40 40 Is Here");
+    _lane1();
+    flag1 = 1;
+    Serial.println("flag1111111111111111 ofofof starting main ifififififif 404040404040");
+    Serial.println(flag1);
+  }
+ else
+ {
+  
+   Serial.println("S111111111111111111111111111 Is Here");
+  lane1();
+ }
+
+//===========================================================================================================================================================================================
+
+for(int i=0; i<3;i++)                            // Comparision among sensor values ( Greatest fisrt to lowest )
+{     
+    if(s2>=s3 && s2>=s4 && flag2 == 0)
+     {
+      Serial.println(" S22222222222222222 Is Here");
+      lane2();
+      flag2=1;
+      Serial.println("flag2222222222222222 ofofofofofofof 222222222222 ------------ mainmianmianmain"); 
+      Serial.println(flag2);
+          if(flag2==1 && s3>=s4)
+          {
+            Serial.println("S33333333333333333 Is Here");
+            lane3();
+            flag3=1;
+            Serial.println("flag333333333333333 ofofofofofofof 22222222222222 ---------------- ifififififififififif ");
+            Serial.println(flag3);
+              if(flag3==1)
+               {
+                Serial.println("S4444444444444444444444 Is Here");
+                lane4();
+                flag4=1;
+                Serial.println("flag444444444444444 ofofofofofofof 22222222222222222 ---------------- ifififififififfif");
+                Serial.println(flag4);
+                }
+         
+              else
+                {
+                  Serial.println("Not Possible S2222222222----ififififififififififififfififififif");
+                }
+          }
+          else
+          {
+        
+            Serial.println("S4444444444444444444444 Is Here");
+            lane4();
+            flag4=1;
+            Serial.println("flag44444444444 ofofofofof 2222222222 ------------ elseelseelseelseelse");
+            Serial.println(flag4);
+              if(flag4==1)
+              {
+                Serial.println("S33333333333333333 Is Here");
+                lane3();
+                flag3=1;
+                Serial.println("flag3333333333333 ofofofofofofof 22222222222 ------------- elseelseelseelseelse");
+                Serial.println(flag3);
+              }
+              else
+              {
+                Serial.println("Not Possible 2222222222---------------elseelseelseelselseelse");
+              }
+          }
+    }
+    else if(s3>=s2 && s3>=s4 && flag3 == 0)
+    {
+      lane3();
+      flag3=1;
+      Serial.println("flag3333333333333 ofofofofof 333333333 ----------- mainmianmain");
+      Serial.println(flag3);
+        if(flag3==1 && s2>=s4)
+         {
+          Serial.println(" S22222222222222222 Is Here");
+          lane2();
+          flag2=1;
+          Serial.println("flag222222222 ofofofofofo 3333333333 ---------- ififififififififif");
+          Serial.println(flag2);
+            if(flag2==1)
+            {
+          
+              Serial.println("S4444444444444444444444 Is Here");
+              lane4();
+              flag4=1;
+             Serial.println("flag44444444444444 ofofofofofoffo 3333333333333333 ------------ ififififififififififif");
+              Serial.println(flag4);
+            }
+            else
+            {
+              Serial.println("Not Possible 33333333333 -------------------- ifififififififififififififififif");
+            }
+         }
+        else
+        {
+        
+          Serial.println("S4444444444444444444444 Is Here");
+          lane4();
+          flag4=1;
+          Serial.println("flag44444444444444 ofofofofofof 33333333333333 ------------- elseelseelseelseelse");
+          Serial.println(flag4);
+            if(flag4==1)
+            {
+              Serial.println(" S22222222222222222 Is Here");
+              lane2();
+              flag2=1;
+              Serial.println("flag22222222222222 ofofofofofofofofo 33333333333 -------------- elseelseelseelseelse");
+              Serial.println(flag2);
+            }
+            else
+            {
+              Serial.println("Not Possible 333333333333333333333 --------------- elseelseelseelseelseelse");
+            }
+        }
+    }
+  
+    else if(s4>=s3 && s4>=s2 && flag4 == 0)
+    {
+  
+      Serial.println("S4444444444444444444444 Is Here");
+      lane4();
+      flag4=1;
+      Serial.println("flag44444444444444 mainmainmain Starting");
+      Serial.println(flag4);
+         if(flag4==1 && s2>=s3)
+          {
+            Serial.println(" S22222222222222222 Is Here");
+            lane2();
+            flag2=1;
+            Serial.println("flag22222222222 ofofofofofofofofof 444444444444 ------------- ififififififififi");
+            Serial.println(flag2);
+              if(flag2==1)
+                {
+                  Serial.println("S33333333333333333 Is Here");
+                  lane3();
+                  flag3=1;
+                  Serial.println("flag333333333333 ofofofofofofo 4444444444444444 --------------- ifififififififififif");
+                  Serial.println(flag3);
+                }
+              else
+                {
+                  Serial.println("Not Possible 444444444444444 ---------- ififififififififififififififiif");
+                }
+          }
+         else
+          {
+            Serial.println("S33333333333333333 Is Here");
+            lane3();
+            flag3=1;
+            Serial.println("flag3333333333333 ofofofofof 444444444444 --------------- elseelseelseelseelselese");
+            Serial.println(flag3);
+              if(flag3==1)
+                {
+                  Serial.println(" S22222222222222222 Is Here");
+                  lane2();
+                  flag2=1;
+                  Serial.println("flag2222222 ofofof 4444444444 --------------- elseelseelseelseelseelse ");
+                  Serial.println(flag2);
+                }
+              else
+              {
+                Serial.println("Not Possible 4444444444444 ---------------- elseelseelseelseelseelse");
+              }
+          } 
+    }
+    else if(s2 == s3 && s2 == s4 && flag2==0)
+      {
+        Serial.println(" S22222222222222222 Is Here");
+        lane2();
+        flag2=1;
+        Serial.println("flag2222222222 ============== ifififififififififififif");
+        Serial.println(flag2);
+          if( flag2 == 1 && s3==s4)
+            {
+              Serial.println("S33333333333333333 Is Here");
+              lane3();
+              flag3=1;
+              Serial.println("flag3333333333 ========= ifififififififififif");
+              Serial.println(flag3);
+                if(flag3==1)
+                  {
+          
+                    Serial.println("S4444444444444444444444 Is Here");
+                    lane4();
+                    flag4=1;
+                    Serial.println("flag44444444 ====== ifififififififififif");
+                    Serial.println(flag4);
+                  }
+                 else
+                  {
+                    Serial.println("Not Possible 222222 ofofof  =========== -------------- ifififififififififififififififif");
+                  }
+            }
+          else
+           {
+            Serial.println("Not Possible 22222222222222 ofofof ========== ------------ elseelseelseelseelseelseelse"); 
+           }
+    }
+    
+}
+
+
+          Serial.println("Reset Flagssssssssssssssssss");
+flag2 = 0;
+  Serial.println("flag2222222222  reset reset reset reset reset reset reset reset reset reset");
+  Serial.println(flag2);
+flag3 = 0;
+  Serial.println("flag3333333333 reset reset reset reset reset reset reset reset reset reset");
+  Serial.println(flag3);
+flag4 = 0;
+  Serial.println("flag4444444444 reset reset reset reset reset reset reset reset reset reset");
+  Serial.println(flag4);
+
+          Serial.println(" I have done it Reeessseeetttt");
+          
+}
+
+//===========================================================================================================================================================================================
+
+void _lane1()
+{
+ Serial.println(" I am _Lane1");
+ digitalWrite(G1,HIGH);
+ Serial.println(" _Leddddddddddd1");
+ digitalWrite(R2,HIGH);
+ digitalWrite(R3,HIGH);
+ digitalWrite(R4,HIGH);
+ Serial.println(" _Leeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeddddddddddd1");
+ Serial.println("_leds1");
+ _SevenSeg1();
+}
+
+//===========================================================================================================================================================================================
+
+void lane1()
+{
+ Serial.println(" I am Lane1");
+ digitalWrite(R1,LOW);
+ digitalWrite(G1,HIGH);
+ Serial.println(" Leddddddddddd1");
+ digitalWrite(R2,HIGH);
+ digitalWrite(R3,HIGH);
+ digitalWrite(R4,HIGH);
+ Serial.println(" Leeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeddddddddddd1");
+ Serial.println("leds1");
+ SevenSeg1();
+}
+
+//===========================================================================================================================================================================================       
+
+void lane11()
+{
+ Serial.println(" i AM RUNNING11");
+ digitalWrite(G1,LOW);
+ digitalWrite(Y1,HIGH);
+ delay(3000); 
+ digitalWrite(Y1,LOW);
+ digitalWrite(R1,HIGH);
+ return;
+}
+
+//===========================================================================================================================================================================================
+
+void lane2()
+{
+ Serial.println(" I am Lane2");
+ digitalWrite(R2,LOW);
+ digitalWrite(G2,HIGH);
+ Serial.println(" Leddddddddddd2");
+ digitalWrite(R1,HIGH);
+ digitalWrite(R3,HIGH);
+ digitalWrite(R4,HIGH);
+ Serial.println(" Leeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeddddddddddd2");
+ Serial.println("leds2");
+ SevenSeg2();
+}
+
+//===========================================================================================================================================================================================       
+
+void lane22()
+{
+ Serial.println(" i AM RUNNING2");
+ digitalWrite(G2,LOW);
+ digitalWrite(Y2,HIGH);
+ delay(3000); 
+ digitalWrite(Y2,LOW);
+ digitalWrite(R2,HIGH);
+ return;
+}
+
+//===========================================================================================================================================================================================
+
+void lane3()
+{
+ Serial.println(" I am Lane3");
+ digitalWrite(R3,LOW);
+ digitalWrite(G3,HIGH);
+ Serial.println(" Leddddddddddd3");
+ digitalWrite(R2,HIGH);
+ digitalWrite(R1,HIGH);
+ digitalWrite(R4,HIGH);
+ Serial.println(" Leeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeddddddddddd3");
+ Serial.println("leds3");
+ SevenSeg3();
+}
+ 
+//===========================================================================================================================================================================================
+
+void lane33()
+{
+ Serial.println(" i AM RUNNING3");
+ digitalWrite(G3,LOW);
+ digitalWrite(Y3,HIGH);
+ delay(3000); 
+ digitalWrite(Y3,LOW);
+ digitalWrite(R3,HIGH);
+ return;
+}
+
+//===========================================================================================================================================================================================
+
+void lane4()
+{
+ Serial.println(" I am Lane4");
+ digitalWrite(R4,LOW);
+ digitalWrite(G4,HIGH);
+ Serial.println(" Leddddddddddd4");
+ digitalWrite(R2,HIGH);
+ digitalWrite(R3,HIGH);
+ digitalWrite(R1,HIGH);
+ Serial.println(" Leeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeddddddddddd4");
+ Serial.println("leds4");
+ SevenSeg4();
+}
+
+//===========================================================================================================================================================================================       
+
+void lane44()
+{
+ Serial.println(" i AM RUNNING4");
+ digitalWrite(G4,LOW);
+ digitalWrite(Y4,HIGH);
+ delay(3000); 
+ digitalWrite(Y4,LOW);
+ digitalWrite(R4,HIGH);
+ return;
+}
+
+//=========================================================================================================================================================================================== 
+
+int allotTime1()
+{
+   Serial.println("Allot Time1111111111111111111111111111");
+   c1= sen1;
+   
+   Serial.println(c1);
+   vehicle_time1 = 0;
+   vehicle_time1 = ((c1*3)/2) + buffer1;
+   Serial.println(vehicle_time1);
+   if(vehicle_time1<60)
+   { 
+     Serial.println(vehicle_time1);
+     return(vehicle_time1);
+   }
+   else
+   {
+    buffer1=0;
+    Serial.println(vehicle_time1);
+    buffer1 = (vehicle_time1 - 60); 
+    Serial.println(buffer1);
+    vehicle_time1 = 60;
+    return(vehicle_time1);
+   }
+}
+
+//===========================================================================================================================================================================================
+
+int _allotTime1()
+{
+  Serial.println("___Allot Time11111111111111111111111111111");
+  vehicle_time1 = 40;
+  return(vehicle_time1);
+}
+
+//===========================================================================================================================================================================================
+
+int allotTime2()
+{
+   Serial.println("Allot Time222222222222222222222222222");
+   c2=   sen2;
+   Serial.println(c2);
+   vehicle_time2 = 0;
+   vehicle_time2 = (c2*3)/2 + buffer2;
+   Serial.println(vehicle_time2);
+   if(vehicle_time2<60)
+   { 
+    Serial.println(vehicle_time2);
+     return(vehicle_time2);
+   }
+   else
+   {
+    Serial.println(vehicle_time2);
+    buffer2 = 0;
+    buffer2 = (vehicle_time2 - 60);
+    Serial.println(buffer2);
+    vehicle_time2 = 60;
+    return(vehicle_time2);
+   }
+}
+
+//===========================================================================================================================================================================================
+
+int allotTime3()
+{
+   Serial.println("Allot Time333333333333333333333333333");
+   c3=  sen3;
+   Serial.println(c3);
+   vehicle_time3 = 0;
+   vehicle_time3 = (c3*3)/2 + buffer3;
+   Serial.println(vehicle_time3);
+   if(vehicle_time3<60)
+   { 
+     Serial.println(vehicle_time3);
+     return(vehicle_time3);
+   }
+   else
+   {
+    Serial.println(vehicle_time3);
+    buffer3 = 0;
+    buffer3 = (vehicle_time3 - 60);
+    Serial.println(buffer3);
+    vehicle_time3 = 60;
+    return(vehicle_time3);
+   }
+}
+
+//============================================================================================================================================================================================
+
+int allotTime4()
+{
+   Serial.println("Allot Time44444444444444444444444");
+   c4= sen4;
+   Serial.println(c4);
+   vehicle_time4 = 0;
+   vehicle_time4 = (c4*3)/2 + buffer4;
+   Serial.println(vehicle_time4);
+   if(vehicle_time4<60)
+   { 
+     Serial.println(vehicle_time4);
+     return(vehicle_time4);
+   }
+   else
+   {
+    Serial.println(vehicle_time4);
+    buffer4 = 0;
+    buffer4 = (vehicle_time4 - 60);
+    Serial.println(buffer4);
+    vehicle_time4 = 60;
+    return(vehicle_time4);
+   }
+}
+
+//===========================================================================================================================================================================================
+
+int SevenSeg1()
+ { 
+    Serial.println(" 1111111111111111111111111111111111111111111777777777777777777777777777777777777777777777777777777777777777");
+    int vehicle_time1 = allotTime1();
+    Serial.println(vehicle_time1);
+
+    int ones = 0; int tens = 0;
+  
+    ones = vehicle_time1 % 10;
+    Serial.println(ones);  
+    tens = vehicle_time1 / 10;
+    Serial.println(tens);
+   
+ for(int num=tens;num>-2;num--)        //tens digit loop
+{
+   Serial.println(num);
+   if(num==-1)
+ {
+   break;
+ }
+    digitalWrite(14,bitRead(num,0)); //display 4 BCD digits of number
+    Serial.println(num);
+    digitalWrite(15,bitRead(num,1));
+    Serial.println(num);
+    digitalWrite(16,bitRead(num,2));
+    Serial.println(num);
+    digitalWrite(17,bitRead(num,3));
+    Serial.println(num);
+
+    
+    for(int num2=ones;num2>-1;num2--)        //one's digit loop
+{
+    Serial.print(num2);
+    digitalWrite(18,bitRead(num2,0)); //display 4 BCD digits of number
+    Serial.print(num2);
+    digitalWrite(19,bitRead(num2,1));
+    Serial.print(num2);
+    digitalWrite(20,bitRead(num2,2));
+    Serial.print(num2);
+    digitalWrite(21,bitRead(num2,3));
+    Serial.print(num2);
+
+    if (num2 == 0)
+    {
+     ones =9;
+    }
+     delay(500);
+  
+    }
+    delay(500);
+}
+lane11();
+}
+
+//===========================================================================================================================================================================================
+
+int _SevenSeg1()
+ { 
+    Serial.println(" __1111111111111111111111111111111111111111111111777777777777777777777777777777777777777777777777777777777777777");
+    int vehicle_time1 = _allotTime1();
+    Serial.println(vehicle_time1);
+
+    int ones = 0; int tens = 0;
+  
+    ones = vehicle_time1 % 10;
+    Serial.println(ones);  
+    tens = vehicle_time1 / 10;
+    Serial.println(tens);
+   
+ for(int num=tens;num>-2;num--)        //tens digit loop
+{
+   Serial.println(num);
+   if(num==-1)
+ {
+   break;
+ }
+    digitalWrite(14,bitRead(num,0)); //display 4 BCD digits of number
+    Serial.println(num);
+    digitalWrite(15,bitRead(num,1));
+    Serial.println(num);
+    digitalWrite(16,bitRead(num,2));
+    Serial.println(num);
+    digitalWrite(17,bitRead(num,3));
+    Serial.println(num);
+
+    
+    for(int num2=ones;num2>-1;num2--)        //one's digit loop
+{
+    Serial.print(num2);
+    digitalWrite(18,bitRead(num2,0)); //display 4 BCD digits of number
+    Serial.print(num2);
+    digitalWrite(19,bitRead(num2,1));
+    Serial.print(num2);
+    digitalWrite(20,bitRead(num2,2));
+    Serial.print(num2);
+    digitalWrite(21,bitRead(num2,3));
+    Serial.print(num2);
+
+    if (num2 == 0)
+    {
+     ones =9;
+    }
+     delay(500);
+  
+    }
+    delay(500);
+}
+lane11();
+}
+
+//===========================================================================================================================================================================================
+
+int SevenSeg2()
+ { 
+    Serial.println(" 222222222222222222222222222222222222777777777777777777777777777777777777777777777777777777777777777");
+    int vehicle_time2 = allotTime2();
+    Serial.println(vehicle_time2);
+
+    int ones = 0; int tens = 0;
+  
+    ones = vehicle_time2 % 10;
+    Serial.println(ones);  
+    tens = vehicle_time2 / 10;
+    Serial.println(tens);
+   
+ for(int num=tens;num>-2;num--)        //tens digit loop
+{
+   Serial.println(num);
+   if(num==-1)
+ {
+   break;
+ }
+    digitalWrite(23,bitRead(num,0)); //display 4 BCD digits of number
+    Serial.println(num);
+    digitalWrite(25,bitRead(num,1));
+    Serial.println(num);
+    digitalWrite(27,bitRead(num,2));
+    Serial.println(num);
+    digitalWrite(29,bitRead(num,3));
+    Serial.println(num);
+
+    
+    for(int num2=ones;num2>-1;num2--)        //one's digit loop
+{
+    Serial.print(num2);
+    digitalWrite(31,bitRead(num2,0)); //display 4 BCD digits of number
+    Serial.print(num2);
+    digitalWrite(33,bitRead(num2,1));
+    Serial.print(num2);
+    digitalWrite(35,bitRead(num2,2));
+    Serial.print(num2);
+    digitalWrite(37,bitRead(num2,3));
+    Serial.print(num2);
+
+    if (num2 == 0)
+    {
+     ones =9;
+    }
+     delay(500);
+  
+    }
+    delay(500);
+}
+lane22();
+}
+
+//===========================================================================================================================================================================================
+
+int SevenSeg3()
+ { 
+    Serial.println(" 333333333333333333333333333333333333333333777777777777777777777777777777777777777777777777777777777777777");
+    int vehicle_time3 = allotTime3();
+    Serial.println(vehicle_time3);
+
+    int ones = 0; int tens = 0;
+  
+    ones = vehicle_time3 % 10;
+    Serial.println(ones);  
+    tens = vehicle_time3 / 10;
+    Serial.println(tens);
+   
+ for(int num=tens;num>-2;num--)        //tens digit loop
+{
+   Serial.println(num);
+   if(num==-1)
+ {
+   break;
+ }
+    digitalWrite(39,bitRead(num,0)); //display 4 BCD digits of number
+    Serial.println(num);
+    digitalWrite(41,bitRead(num,1));
+    Serial.println(num);
+    digitalWrite(43,bitRead(num,2));
+    Serial.println(num);
+    digitalWrite(45,bitRead(num,3));
+    Serial.println(num);
+
+    
+    for(int num2=ones;num2>-1;num2--)        //one's digit loop
+{
+    Serial.print(num2);
+    digitalWrite(47,bitRead(num2,0)); //display 4 BCD digits of number
+    Serial.print(num2);
+    digitalWrite(49,bitRead(num2,1));
+    Serial.print(num2);
+    digitalWrite(51,bitRead(num2,2));
+    Serial.print(num2);
+    digitalWrite(53,bitRead(num2,3));
+    Serial.print(num2);
+
+    if (num2 == 0)
+    {
+     ones =9;
+    }
+     delay(500);
+  
+    }
+    delay(500);
+}
+lane33();
+}
+
+//===========================================================================================================================================================================================
+
+int SevenSeg4()
+ { 
+    Serial.println(" 4444444444444444444444444444444444777777777777777777777777777777777777777777777777777777777777777");
+    int vehicle_time4 = allotTime4();
+    Serial.println(vehicle_time4);
+
+    int ones = 0; int tens = 0;
+  
+    ones = vehicle_time4 % 10;
+    Serial.println(ones);  
+    tens = vehicle_time4 / 10;
+    Serial.println(tens);
+   
+ for(int num=tens;num>-2;num--)        //tens digit loop
+{
+   Serial.println(num);
+   if(num==-1)
+ {
+   break;
+ }
+    digitalWrite(22,bitRead(num,0)); //display 4 BCD digits of number
+    Serial.println(num);
+    digitalWrite(24,bitRead(num,1));
+    Serial.println(num);
+    digitalWrite(26,bitRead(num,2));
+    Serial.println(num);
+    digitalWrite(28,bitRead(num,3));
+    Serial.println(num);
+
+    
+    for(int num2=ones;num2>-1;num2--)        //one's digit loop
+{
+    Serial.print(num2);
+    digitalWrite(30,bitRead(num2,0)); //display 4 BCD digits of number
+    Serial.print(num2);
+    digitalWrite(32,bitRead(num2,1));
+    Serial.print(num2);
+    digitalWrite(34,bitRead(num2,2));
+    Serial.print(num2);
+    digitalWrite(36,bitRead(num2,3));
+    Serial.print(num2);
+
+    if (num2 == 0)
+    {
+     ones =9;
+    }
+     delay(500);
+  
+    }
+    delay(500);
+}
+lane44();
+}
+
+//===========================================================================================================================================================================================
